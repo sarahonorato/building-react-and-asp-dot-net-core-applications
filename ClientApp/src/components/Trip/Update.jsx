@@ -1,13 +1,14 @@
 ﻿import React, { Component } from 'react';
 import axios from 'axios';
 
-export class Create extends Component {
+export class Update extends Component {
     constructor(props) {
         super(props);
         this.onChangeName = this.onChangeName.bind(this);
         this.onChangeDescription = this.onChangeDescription.bind(this);
         this.onChangeDateStarted = this.onChangeDateStarted.bind(this);
         this.onChangeDateCompleted = this.onChangeDateCompleted.bind(this);
+        this.onUpdateCancel = this.onUpdateCancel.bind(this);
         this.onSubmit = this.onSubmit.bind(this);
         this.state = {
             name: '',
@@ -15,6 +16,21 @@ export class Create extends Component {
             dateStarted: null,
             dateCompleted: null
         }
+    }
+
+    componentDidMount() {
+        const { id } = this.props.match.params;
+
+        axios.get("api/trips/SingleTrip/" + id).then(trip => {
+            const response = trip.data;
+
+            this.setState({
+                name: response.name,
+                description: response.description,
+                dateStarted: new Date(response.dateStarted).toISOString().slice(0,10),
+                dateCompleted: response.dateCompleted ? new Date(response.dateCompleted).toISOString().slice(0, 10) : null
+            })
+        })
     }
 
     onChangeName(e) {
@@ -41,19 +57,24 @@ export class Create extends Component {
         });
     }
 
+    onUpdateCancel() {
+        const { history } = this.props;
+        history.push('/trips');
+    }
+
     onSubmit(e) {
         e.preventDefault();
         const { history } = this.props;
+        const { id } = this.props.match.params;
 
         let tripObject = {
-            Id: Math.floor(Math.random() * 1000),
             name: this.state.name,
             description: this.state.description,
-            dateStarted: this.state.dateStarted,
-            dateCompleted: this.state.dateCompleted
+            dateStarted: new Date(this.state.dateStarted).toISOString().slice(0, 10),
+            dateCompleted: this.state.dateCompleted ? new Date(this.state.dateCompleted).toISOString().slice(0, 10) : null
         }
 
-        axios.post("api/Trips/AddTrip", tripObject).then(result => {
+        axios.post("api/Trips/updateTrip" + id, tripObject).then(result => {
             history.push("/trips");
         })
     }
@@ -108,7 +129,8 @@ export class Create extends Component {
 
 
                     <div className="form-group">
-                        <input type="submit" value="Add trip" className="btn btn-primary" />
+                        <button onClick={this.onUpdateCancel} className="btn btn-default">Cancel</button>
+                        <button type="submit" className="btn btn-success">Update</button>
                     </div>
                 </form>
             </div>            
